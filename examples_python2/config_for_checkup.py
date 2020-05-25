@@ -8,7 +8,7 @@ from cpapi import APIClient, APIClientArgs
 
 def main():
     # getting details from the user
-    api_server = raw_raw_input("Enter server IP address or hostname:")
+    api_server = raw_input("Enter server IP address or hostname:")
     username = raw_input("Enter username: ")
 
     if sys.stdin.isatty():
@@ -83,9 +83,9 @@ def main():
             line_num = 0
             for line in f:
                 line_num += 1
-                add_password_dictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : f"printf \"{line}\" >> $FWDIR/conf/additional_pass.conf", "targets" : gw_name})
+                add_password_dictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : "printf \"{}\" >> $FWDIR/conf/additional_pass.conf".format(line), "targets" : gw_name})
                 if add_password_dictionary.success:
-                    print(f"The password dictionary was added successfully")
+                    print("The password dictionary {} was added successfully".format(line))
                 else:
                     print("Failed to add the dictionary - {}".format(add_password_dictionary.error_message))
 
