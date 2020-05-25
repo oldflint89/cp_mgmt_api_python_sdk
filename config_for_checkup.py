@@ -28,9 +28,8 @@ def main():
             print("Login failed:\n{}".format(login_res.error_message))
             exit(1)
 
-
         gw_name = input("Enter the gateway name:")
-        gw_ip = input("Enter th gateway IP address:")
+        gw_ip = input("Enter the gateway IP address:")
         sic = input("Enter one-time password for the gateway(SIC):")
         version = input("Enter the gateway version(like RXX.YY):")
         add_gw = client.api_call("add-simple-gateway", {'name' : gw_name, 'ipv4-address' : gw_ip, 'one-time-password' : sic, 'version': version.capitalize(), 'application-control' : 'true', 'url-filtering' : 'true', 'ips' : 'true', 'anti-bot' : 'true', 'anti-virus' : 'true', 'threat-emulation' : 'true'})
@@ -40,6 +39,7 @@ def main():
         elif add_gw.success:
             print("The gateway was added successfully.")
             gw_uid = add_gw.data['uid']
+            gw_name = add_gw.data['name']
         else:
             print("Failed to add the gateway - {}".format(add_gw.error_message))
             exit(1)
@@ -60,41 +60,28 @@ def main():
         if publish_res.success:
             print("The changes were published successfully.")
         else:
-                print("Failed to publish the changes.")
+                print("Failed to publish the changes - {}".format(install_tp_policy.error_message))
 
         install_access_policy = client.api_call("install-policy", {"policy-package" : "Standard", "access" : 'true',  "threat-prevention" : 'false', "targets" : gw_uid})
-
         if install_access_policy.success:
-            print("The access policy is installing...")
+            print("The access policy has been installed")
         else:
-            print("Failed to install access policy - {}".format(install_access_policy.error_message))
-
-        def check_policy_progress(connection):
-            check_policy = connection.api_call("show-tasks", {"status" : "in-progress"})
-            if check_policy.success:
-                if int(check_policy.data['total']) == 0:
-                    print('Policy has installed')
-                    return True
-                else:
-                    print('The policy installation progress is {}%'.format(check_policy.data))
-                    return False
-
-        policy_installed = False
-        while not policy_installed:
-            check_policy_progress(client)
-            sleep(2)
+                print("Failed to install access policy - {}".format(install_tp_policy.error_message))
 
         install_tp_policy = client.api_call("install-policy", {"policy-package" : "Standard", "access" : 'false',  "threat-prevention" : 'true', "targets" : gw_uid})
-
         if install_tp_policy.success:
-            print("The threat prevention policy is installing...")
+            print("The threat prevention policy has installed")
         else:
             print("Failed to install threat prevention policy - {}".format(install_tp_policy.error_message))
 
-        policy_installed = False
-        while not policy_installed:
-            check_policy_progress(client)
-            sleep(2)
+        with open('additional_pass.conf') as f:
+            line_num = 0
+            for line in f:
+                line_num += 1
+                add_password_mdictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : f"printf \"{line}\" >> $FWDIR/conf/additional_pass.conf", "targets" : gw_name})
+                if add_password_dictionary.success:
+                    print(f"The password dictionary was added successfully")
+                else:
+                    print("Failed to add the dictionary - {}".format(add_password_dictionary.error_message))
 
-if __name__ == "__main__":
-    main()
+main()
