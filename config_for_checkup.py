@@ -8,14 +8,14 @@ from cpapi import APIClient, APIClientArgs
 
 def main():
     # getting details from the user
-    api_server = input("Enter server IP address or hostname:")
-    username = input("Enter username: ")
+    api_server = raw_raw_input("Enter server IP address or hostname:")
+    username = raw_input("Enter username: ")
 
     if sys.stdin.isatty():
         password = getpass.getpass("Enter password: ")
     else:
         print("Attention! Your password will be shown on the screen!")
-        password = input("Enter password: ")
+        password = raw_input("Enter password: ")
     client_args = APIClientArgs(server=api_server)
 
     with APIClient(client_args) as client:
@@ -28,10 +28,14 @@ def main():
             print("Login failed:\n{}".format(login_res.error_message))
             exit(1)
 
-        gw_name = input("Enter the gateway name:")
-        gw_ip = input("Enter the gateway IP address:")
-        sic = input("Enter one-time password for the gateway(SIC):")
-        version = input("Enter the gateway version(like RXX.YY):")
+        gw_name = raw_input("Enter the gateway name:")
+        gw_ip = raw_input("Enter the gateway IP address:")
+        if sys.stdin.isatty():
+            sic = getpass.getpass("Enter one-time password for the gateway(SIC): ")
+        else:
+            print("Attention! Your password will be shown on the screen!")
+            sic = raw_input("Enter one-time password for the gateway(SIC): ")
+        version = raw_input("Enter the gateway version(like RXX.YY):")
         add_gw = client.api_call("add-simple-gateway", {'name' : gw_name, 'ipv4-address' : gw_ip, 'one-time-password' : sic, 'version': version.capitalize(), 'application-control' : 'true', 'url-filtering' : 'true', 'ips' : 'true', 'anti-bot' : 'true', 'anti-virus' : 'true', 'threat-emulation' : 'true'})
         if add_gw.success and add_gw.data['sic-state'] != "communicating":
             print("Secure connection with the gateway hasn't established!")
@@ -73,12 +77,13 @@ def main():
             print("The threat prevention policy has installed")
         else:
             print("Failed to install threat prevention policy - {}".format(install_tp_policy.error_message))
-
+        
+        # add passwords and passphrases to dictionary
         with open('additional_pass.conf') as f:
             line_num = 0
             for line in f:
                 line_num += 1
-                add_password_mdictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : f"printf \"{line}\" >> $FWDIR/conf/additional_pass.conf", "targets" : gw_name})
+                add_password_dictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : f"printf \"{line}\" >> $FWDIR/conf/additional_pass.conf", "targets" : gw_name})
                 if add_password_dictionary.success:
                     print(f"The password dictionary was added successfully")
                 else:
