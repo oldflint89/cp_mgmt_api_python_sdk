@@ -7,22 +7,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from cpapi import APIClient, APIClientArgs
 
 def main():
-    # getting details from the user
-    api_server = raw_input("Enter server IP address or hostname:")
-    username = raw_input("Enter username: ")
-
-    if sys.stdin.isatty():
-        password = getpass.getpass("Enter password: ")
-    else:
-        print("Attention! Your password will be shown on the screen!")
-        password = raw_input("Enter password: ")
-    client_args = APIClientArgs(server=api_server)
-
     with APIClient(client_args) as client:
-        if client.check_fingerprint() is False:
-            print("Could not get the server's fingerprint - Check connectivity with the server.")
-            exit(1)
-        login_res = client.login(username, password)
+       # if client.check_fingerprint() is False:
+       #     print("Could not get the server's fingerprint - Check connectivity with the server.")
+       #     exit(1)
+        login_res = client.login_as_root()
 
         if login_res.success is False:
             print("Login failed:\n{}".format(login_res.error_message))
