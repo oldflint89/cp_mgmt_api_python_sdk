@@ -1,13 +1,10 @@
-from __future__ import print_function
-from time import sleep
-import getpass
 import sys, os
+from __future__ import print_function
+from cpapi import APIClient, APIClientArgs
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from cpapi import APIClient, APIClientArgs
-
 def main():
-    with APIClient(client_args) as client:
+    with APIClient() as client:
        # if client.check_fingerprint() is False:
        #     print("Could not get the server's fingerprint - Check connectivity with the server.")
        #     exit(1)
@@ -63,7 +60,7 @@ def main():
 
         install_tp_policy = client.api_call("install-policy", {"policy-package" : "Standard", "access" : 'false',  "threat-prevention" : 'true', "targets" : gw_uid})
         if install_tp_policy.success:
-            print("The threat prevention policy has installed")
+            print("The threat prevention policy has been installed")
         else:
             print("Failed to install threat prevention policy - {}".format(install_tp_policy.error_message))
         
@@ -74,7 +71,7 @@ def main():
                 line_num += 1
                 add_password_dictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : "printf \"{}\" >> $FWDIR/conf/additional_pass.conf".format(line), "targets" : gw_name})
                 if add_password_dictionary.success:
-                    print("The password dictionary {} was added successfully".format(line))
+                    print("The password dictionary line {} was added successfully".format(line_num))
                 else:
                     print("Failed to add the dictionary - {}".format(add_password_dictionary.error_message))
 
