@@ -1,7 +1,7 @@
-import sys, os
 from __future__ import print_function
-from cpapi import APIClient, APIClientArgs
+import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from cpapi import APIClient, APIClientArgs
 
 def main():
     with APIClient() as client:
