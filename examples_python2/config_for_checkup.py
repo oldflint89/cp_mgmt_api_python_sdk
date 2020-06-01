@@ -1,4 +1,5 @@
 from __future__ import print_function
+import getpass
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from cpapi import APIClient, APIClientArgs
