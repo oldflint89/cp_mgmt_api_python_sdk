@@ -1,10 +1,20 @@
+#!/usr/bin/python
 from __future__ import print_function
 import getpass
 import sys, os
+import argparse
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from cpapi import APIClient, APIClientArgs
 
 def main():
+    parser = argparse.ArgumentParser(description='CheckUP script')
+
+    parser.add_argument('-n', metavar="GW name for SC", action="store", dest="gw_name", default="CPGW", type=str, help="Default - CPGW")
+    parser.add_argument('-i', metavar='GW IP address', action="store", dest="gw_ip", type=str, required=True, help="IPv4 address, like x.x.x.x")
+    parser.add_argument('-v', metavar="GW software", action="store", dest="version", default="R80.40", type=str, help="R77.30/R80.10/R80.20/R80.30/default - R80.40")
+
+    args = parser.parse_args()
+
     with APIClient() as client:
        # if client.check_fingerprint() is False:
        #     print("Could not get the server's fingerprint - Check connectivity with the server.")
@@ -15,22 +25,19 @@ def main():
             print("Login failed:\n{}".format(login_res.error_message))
             exit(1)
 
-        gw_name = raw_input("Enter the gateway name:")
-        gw_ip = raw_input("Enter the gateway IP address:")
         if sys.stdin.isatty():
             sic = getpass.getpass("Enter one-time password for the gateway(SIC): ")
         else:
             print("Attention! Your password will be shown on the screen!")
             sic = raw_input("Enter one-time password for the gateway(SIC): ")
-        version = raw_input("Enter the gateway version(like RXX.YY):")
-        add_gw = client.api_call("add-simple-gateway", {'name' : gw_name, 'ipv4-address' : gw_ip, 'one-time-password' : sic, 'version': version.capitalize(), 'application-control' : 'true', 'url-filtering' : 'true', 'ips' : 'true', 'anti-bot' : 'true', 'anti-virus' : 'true', 'threat-emulation' : 'true'})
+        add_gw = client.api_call("add-simple-gateway", {'name' : args.gw_name, 'ipv4-address' : args.gw_ip, 'one-time-password' : sic, 'version': args.version.capitalize(), 'application-control' : 'true', 'url-filtering' : 'true', 'ips' : 'true', 'anti-bot' : 'true', 'anti-virus' : 'true', 'threat-emulation' : 'true'})
         if add_gw.success and add_gw.data['sic-state'] != "communicating":
             print("Secure connection with the gateway hasn't established!")
             exit(1)
         elif add_gw.success:
             print("The gateway was added successfully.")
             gw_uid = add_gw.data['uid']
-            gw_name = add_gw.data['name']
+            args.gw_name = add_gw.data['name']
         else:
             print("Failed to add the gateway - {}".format(add_gw.error_message))
             exit(1)
@@ -64,13 +71,13 @@ def main():
             print("The threat prevention policy has been installed")
         else:
             print("Failed to install threat prevention policy - {}".format(install_tp_policy.error_message))
-        
+
         # add passwords and passphrases to dictionary
         with open('additional_pass.conf') as f:
             line_num = 0
             for line in f:
                 line_num += 1
-                add_password_dictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : "printf \"{}\" >> $FWDIR/conf/additional_pass.conf".format(line), "targets" : gw_name})
+                add_password_dictionary = client.api_call("run-script", {"script-name" : "Add passwords and passphrases", "script" : "printf \"{}\" >> $FWDIR/conf/additional_pass.conf".format(line), "targets" : args.gw_name})
                 if add_password_dictionary.success:
                     print("The password dictionary line {} was added successfully".format(line_num))
                 else:
